@@ -91,3 +91,7 @@ build_sha:
 	shasum -a 256 release/linux/arm/emoji-manager.tar.gz     > release/linux/arm/emoji-manager.sha256
 	shasum -a 256 release/windows/amd64/emoji-manager.tar.gz > release/windows/amd64/emoji-manager.sha256
 	shasum -a 256 release/darwin/amd64/emoji-manager.tar.gz  > release/darwin/amd64/emoji-manager.sha256
+
+build_docker: build
+	docker build --rm -t d3estudio/digest .
+	docker push d3estudio/digest:latest
