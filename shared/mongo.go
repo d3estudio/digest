@@ -24,13 +24,15 @@ func (m *mongo) Setup() (err error) {
 	m.Session = sess
 
 	m.Items().EnsureIndex(mgo.Index{
-		Key:    []string{"timestamp"},
-		Unique: true,
+		Key:      []string{"timestamp"},
+		Unique:   true,
+		DropDups: true,
 	})
 
 	m.Emojis().EnsureIndex(mgo.Index{
-		Key:    []string{"name"},
-		Unique: true,
+		Key:      []string{"name"},
+		Unique:   true,
+		DropDups: true,
 	})
 	return
 }

@@ -24,7 +24,7 @@ func ProcessUpdatedMessage(m *models.DigestMessageChanged) {
 	if len(url) > 0 {
 
 		var item *models.DigestedMessage
-		err := collection.Find(bson.M{"ts": m.Timestamp}).One(&item)
+		err := collection.Find(bson.M{"timestamp": m.Timestamp}).One(&item)
 		if err != nil && err == mgo.ErrNotFound {
 			logger.Debug("Message does not exist. Handling to ProcessIncomingMessage and returning...")
 			ProcessIncomingMessage(&m.DigestMessage)

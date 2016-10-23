@@ -27,6 +27,8 @@ type settings struct {
 	MongoServer    string   `default:"mongo"`
 	MongoDatabase  string   `default:"digest"`
 	BaseQueueName  string   `default:"Digest"`
+	TwitterKey     string   `default:""`
+	TwitterSecret  string   `default:""`
 }
 
 func (c *settings) Validate() {
