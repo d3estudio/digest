@@ -4,7 +4,7 @@
   <img alt="Language" src="https://img.shields.io/badge/language-Go-blue.svg" />
   <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg" />
   <a href="https://microbadger.com/images/d3estudio/digest" title="Get your own image badge on microbadger.com"><img src="https://images.microbadger.com/badges/image/d3estudio/digest.svg"></a>
-  <a href="https://microbadger.com/images/d3estudio/digest" title="Get your own version badge on microbadger.com"><img src="https://images.microbadger.com/badges/version/d3estudio/digest.svg"></a>A
+  <a href="https://microbadger.com/images/d3estudio/digest" title="Get your own version badge on microbadger.com"><img src="https://images.microbadger.com/badges/version/d3estudio/digest.svg"></a>
 </p>
 > **Warning**: Digest is a work in progress.
 
