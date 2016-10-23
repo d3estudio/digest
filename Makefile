@@ -1,5 +1,7 @@
 .PHONY: build
 
+VERSION := $(shell cat VERSION)
+
 build: get_deps build_collector build_emoji_manager build_prefetcher build_processor build_tar build_sha
 
 get_deps:
@@ -92,6 +94,10 @@ build_sha:
 	shasum -a 256 release/windows/amd64/emoji-manager.tar.gz > release/windows/amd64/emoji-manager.sha256
 	shasum -a 256 release/darwin/amd64/emoji-manager.tar.gz  > release/darwin/amd64/emoji-manager.sha256
 
-build_docker: build
-	docker build --rm -t d3estudio/digest .
-	docker push d3estudio/digest:latest
+build_docker:
+	docker build --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+               --build-arg VCS_REF=`git rev-parse --short HEAD` \
+               --build-arg VERSION=`cat VERSION` \
+							 -t "d3estudio/digest:$(VERSION)" \
+							 .
+	docker push "d3estudio/digest:$(VERSION)"
