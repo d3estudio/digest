@@ -86,7 +86,7 @@ var processors = map[string]poorParserArray{
 	"image": poorParserArray{
 		func(doc *goquery.Document) *string {
 			metas := []string{
-				`meta[property="og:image"]'`,
+				`meta[property="og:image"]`,
 				`meta[name="twitter:image"]`,
 				`meta[itemprop="image"]`,
 			}
