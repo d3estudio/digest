@@ -46,5 +46,13 @@ func (y YouTube) Process(url string) *SourceResult {
 	for _, f := range fields {
 		result.Data[f] = httpResult[f]
 	}
+
+	if thumbnailURL, ok := httpResult["thumbnail_url"]; ok {
+		thumbnailData := processImageData(thumbnailURL.(string))
+		if thumbnailData != nil {
+			result.Data["thumbnail_data"] = thumbnailData
+		}
+	}
+
 	return &result
 }
