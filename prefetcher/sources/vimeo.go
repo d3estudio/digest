@@ -29,6 +29,7 @@ func (v Vimeo) Process(url string) *SourceResult {
 		logger.Error(err)
 		return nil
 	}
+	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error(err)
