@@ -1,11 +1,15 @@
 package sources
 
 import (
+	"bytes"
+	"fmt"
 	"image"
+	"io/ioutil"
 	"net/http"
 
 	gurl "net/url"
 
+	"image/color"
 	_ "image/draw" // This is required in order to use image.DecodeConfig
 	_ "image/gif"
 	_ "image/jpeg"
@@ -13,6 +17,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	log "github.com/Sirupsen/logrus"
+	"github.com/victorgama/colorarty"
 )
 
 // PoorLink is a last-resort source acquirer that attempts to extract basic
@@ -26,10 +31,15 @@ func (p PoorLink) CanHandle(url string) bool {
 }
 
 type poorImageData struct {
-	URL         string `json:"url"`
-	Width       int    `json:"width"`
-	Height      int    `json:"height"`
-	Orientation string `json:"orientation"`
+	URL             string `json:"url"`
+	Width           int    `json:"width"`
+	Height          int    `json:"height"`
+	Orientation     string `json:"orientation"`
+	HasColorData    bool   `json:"has_color_data"`
+	BackgroundColor string `json:"background_color"`
+	PrimaryColor    string `json:"primary_color"`
+	SecondaryColor  string `json:"secondary_color"`
+	DetailColor     string `json:"detail_color"`
 }
 
 type poorParserArray []func(*goquery.Document) *string
@@ -163,10 +173,7 @@ func (p PoorLink) Process(url string) *SourceResult {
 			"url":     url,
 		}
 		if imageData != nil {
-			data["imageOrientation"] = imageData.Orientation
-			data["imageHeight"] = imageData.Height
-			data["imageWidth"] = imageData.Width
-			data["imageUrl"] = imgURL.String()
+			data["imageData"] = imageData
 		}
 		return &SourceResult{
 			Type: "rich-link",
@@ -190,11 +197,19 @@ func processImageSize(url string) *poorImageData {
 		poorLogger.Error(err)
 		return nil
 	}
-	conf, _, err := image.DecodeConfig(resp.Body)
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+
 	if err != nil {
-		poorLogger.Error(err)
+		poorLogger.WithField("step", "read_all").Error(err)
 		return nil
 	}
+	conf, _, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		poorLogger.WithField("step", "decode_config").Error(err)
+		return nil
+	}
+
 	result := poorImageData{
 		Height:      conf.Height,
 		Width:       conf.Width,
@@ -205,5 +220,29 @@ func processImageSize(url string) *poorImageData {
 		result.Orientation = "horizontal"
 	}
 
+	image, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		poorLogger.WithField("step", "full_decode").Error(err)
+		return &result
+	}
+
+	result.HasColorData = true
+	artyResult := colorarty.Analyse(image)
+	result.BackgroundColor = goColorToCSS(artyResult.BackgroundColor)
+	result.PrimaryColor = goColorToCSS(artyResult.PrimaryColor)
+	result.SecondaryColor = goColorToCSS(artyResult.SecondaryColor)
+	result.DetailColor = goColorToCSS(artyResult.DetailColor)
+
 	return &result
+}
+
+func goColorToCSS(c *color.Color) string {
+	cr, cg, cb, _ := (*c).RGBA()
+	r := float64(cr)
+	g := float64(cg)
+	b := float64(cb)
+	r /= 0x101
+	g /= 0x101
+	b /= 0x101
+	return fmt.Sprintf("rgba(%.0f, %.0f, %.0f, 1)", r, g, b)
 }
