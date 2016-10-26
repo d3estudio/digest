@@ -20,15 +20,16 @@ func init() {
 }
 
 type settings struct {
-	Token          string
-	SilencerEmojis []string `default:"no_entry_sign"`
-	RedisServer    string   `default:"redis"`
-	RedisPort      int      `default:"6379"`
-	MongoServer    string   `default:"mongo"`
-	MongoDatabase  string   `default:"digest"`
-	BaseQueueName  string   `default:"Digest"`
-	TwitterKey     string   `default:""`
-	TwitterSecret  string   `default:""`
+	Token             string
+	SilencerEmojis    []string `default:"no_entry_sign"`
+	RedisServer       string   `default:"redis"`
+	RedisPort         int      `default:"6379"`
+	MongoServer       string   `default:"mongo"`
+	MongoDatabase     string   `default:"digest"`
+	BaseQueueName     string   `default:"Digest"`
+	TwitterKey        string   `default:""`
+	TwitterSecret     string   `default:""`
+	TwitterOmitScript string   `default:"false"`
 }
 
 func (c *settings) Validate() {

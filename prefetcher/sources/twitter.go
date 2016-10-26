@@ -34,7 +34,8 @@ func (v Twitter) Process(url string) *SourceResult {
 	logger := log.WithField("processor", "Twitter")
 	api := anaconda.NewTwitterApi("", "")
 	o, err := api.GetOEmbed(gurl.Values{
-		"url": []string{url},
+		"url":         []string{url},
+		"omit_script": []string{shared.Settings.TwitterOmitScript},
 	})
 	if err != nil {
 		logger.Error(err)
