@@ -21,7 +21,7 @@ func (m *DigestMessage) Digest() *DigestedMessage {
 		Text:        m.Text,
 		ChannelName: m.Channel.Name,
 		Date:        time.Now(),
-		User:        m.User.Username,
+		User:        m.User,
 		Reactions:   make(map[string]int),
 	}
 }
@@ -52,7 +52,7 @@ type DigestedMessage struct {
 	ChannelName    string         `json:"channel"`
 	Reactions      map[string]int `json:"reactions"`
 	Date           time.Time      `json:"date"`
-	User           string         `json:"user"`
+	User           DigestUser     `json:"user"`
 	EmbededContent string         `json:"embed"`
 	DetectedURL    string         `json:"url"`
 }

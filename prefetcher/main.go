@@ -60,14 +60,12 @@ func main() {
 					log.WithField("facility", "marshaller").Error("Error encoding result: ", err)
 					continue
 				}
-				item.EmbededContent = string(res)
-				err = shared.Mongo.Items().Update(bson.M{"timestamp": item.Timestamp}, item)
+				err = shared.Mongo.Items().Update(bson.M{"timestamp": item.Timestamp}, bson.M{"$set": bson.M{"embededcontent": string(res)}})
 				if err != nil {
 					log.WithField("facility", "mongo").Error("Error updating item: ", err)
 					continue
 				}
 				break
-			} else {
 			}
 		}
 	}

@@ -22,7 +22,6 @@ func ProcessUpdatedMessage(m *models.DigestMessageChanged) {
 	url := xurls.Strict.FindString(m.Text)
 	collection := shared.Mongo.Items()
 	if len(url) > 0 {
-
 		var item *models.DigestedMessage
 		err := collection.Find(bson.M{"timestamp": m.Timestamp}).One(&item)
 		if err != nil && err == mgo.ErrNotFound {
@@ -35,10 +34,7 @@ func ProcessUpdatedMessage(m *models.DigestMessageChanged) {
 		}
 		logger.Debug("Message has changed and still contains a link. Processing...")
 		url = attemptURLNormalization(url)
-		digested := m.Digest()
-		digested.EmbededContent = item.EmbededContent
-		digested.DetectedURL = url
-		err = collection.Update(bson.M{"timestamp": item.Timestamp}, item)
+		err = collection.Update(bson.M{"timestamp": item.Timestamp}, bson.M{"$set": bson.M{"text": m.Text, "detectedurl": url}})
 		if err != nil {
 			logger.Error("Error updating item: ", err)
 			return
