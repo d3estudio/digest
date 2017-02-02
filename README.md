@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/d3estudio/digest/master/docs/logo.png" /><br/>
   <a href="https://goreportcard.com/report/github.com/d3estudio/digest"><img src="https://goreportcard.com/badge/github.com/d3estudio/digest"></a>
   <img alt="Language" src="https://img.shields.io/badge/language-Go-blue.svg" />
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg" />
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg?_=caf" />
   <a href="https://microbadger.com/images/d3estudio/digest" title="Get your own image badge on microbadger.com"><img src="https://images.microbadger.com/badges/image/d3estudio/digest.svg"></a>
   <a href="https://microbadger.com/images/d3estudio/digest" title="Get your own version badge on microbadger.com"><img src="https://images.microbadger.com/badges/version/d3estudio/digest.svg"></a>
 </p>
