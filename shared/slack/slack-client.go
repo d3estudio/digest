@@ -3,8 +3,10 @@ package slack
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/websocket"
@@ -18,8 +20,8 @@ type Client struct {
 	Token        string
 	Users        map[string]RTMUser
 	Channels     map[string]RTMChannel
-	WebsocketURL string
-	counter      uint64
+	WebSocketURL string
+	Channel      chan RTMMessage
 }
 
 const (
@@ -56,24 +58,23 @@ var watchedMessageTypes = []string{
 
 // Handshake performs the initial handshake process with the Slack Real-Time API
 // server using the provided Token string.
-func (c *Client) Handshake(token string) {
-	c.Token = token
+func (c *Client) handshake() error {
 	c.Users = make(map[string]RTMUser)
 	c.Channels = make(map[string]RTMChannel)
 
-	url := fmt.Sprintf("https://slack.com/api/rtm.start?token=%s", token)
+	url := fmt.Sprintf("https://slack.com/api/rtm.start?token=%s", c.Token)
 	resp, err := http.Get(url)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	var respObj rtmStartResponse
 	err = json.Unmarshal(body, &respObj)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	for _, i := range respObj.Users {
 		if i.Deleted {
@@ -91,7 +92,8 @@ func (c *Client) Handshake(token string) {
 		c.Channels[i.ID] = i
 	}
 
-	c.WebsocketURL = respObj.WebsocketURL
+	c.WebSocketURL = respObj.WebSocketURL
+	return nil
 }
 
 func readMessageFromWS(ws *websocket.Conn) (m RTMMessage, err error) {
@@ -129,50 +131,76 @@ func readMessageFromWS(ws *websocket.Conn) (m RTMMessage, err error) {
 
 // Listen initializes the WebSocket connection with the remote RTM server,
 // and pushes incoming messages into the provided channel.
-func (c *Client) Listen(ch chan RTMMessage) {
-	log.Info("Dialing to", c.WebsocketURL)
-	ws, err := websocket.Dial(c.WebsocketURL, "", "https://api.slack.com/")
-	if err != nil {
-		panic(err)
-	}
-	log.Info("Connection succeeded.")
+func (c *Client) Listen() {
+	attemptNumber := 1
+outerLoop:
 	for {
-		msg, err := readMessageFromWS(ws)
+		log.Info("Attempting handshake... (Attempt ", attemptNumber, ")")
+		if attemptNumber >= 3 {
+			backoff := time.Duration(attemptNumber) * time.Second
+			log.Warn("Backing off by ", attemptNumber, " seconds")
+			time.Sleep(backoff)
+		}
+		err := c.handshake()
 		if err != nil {
-			log.Error(err)
+			log.Error("Handshake failed: ", err)
+			attemptNumber++
 			continue
 		}
-
-		skip := true
-
-		msg.Client = *c
-		if user, ok := c.Users[msg.UserID]; ok {
-			msg.User = user
+		log.Info("Handshake succeeded.")
+		log.Info("Dialing to ", c.WebSocketURL)
+		ws, err := websocket.Dial(c.WebsocketURL, "", "https://api.slack.com/")
+		if err != nil {
+			log.Error("WebSocket Dial failed: ", err)
+			attemptNumber++
+			continue
 		}
-
-		if channel, ok := c.Channels[msg.ChannelID]; ok {
-			msg.Channel = channel
-		}
-
-		for _, t := range watchedMessageTypes {
-			if t == msg.Type {
-				skip = false
-				break
+		log.Info("Connection succeeded.")
+		attemptNumber = 1
+		log.Info("Entering message loop...")
+		for {
+			msg, err := readMessageFromWS(ws)
+			if err != nil {
+				if err == io.EOF {
+					log.Error("WebSocket Connection Interrupted. Performing Handshake... Error was: ", err)
+					continue outerLoop
+				} else {
+					log.Error(err)
+					continue
+				}
 			}
-		}
-		if skip {
-			continue
-		}
 
-		// We actually want to move the SubType data into the Type, so
-		// parsing is easier on our end, but not when we're dealing with an
-		// emoji_changed message. :)
-		if msg.SubType != "" && msg.Type != TypeEmojiChanged {
-			msg.Type = msg.SubType
-		}
+			skip := true
+			msg.Client = *c
+			if user, ok := c.Users[msg.UserID]; ok {
+				msg.User = user
+			}
 
-		logMessage(msg)
-		ch <- msg
+			if channel, ok := c.Channels[msg.ChannelID]; ok {
+				msg.Channel = channel
+			}
+
+			for _, t := range watchedMessageTypes {
+				if t == msg.Type {
+					skip = false
+					break
+				}
+			}
+
+			if skip {
+				continue
+			}
+
+			// We actually want to move the SubType data into the Type, so
+			// parsing is easier on our end, but not when we're dealing
+			// with an emoji_changed message.
+			if msg.SubType != "" && msg.Type != TypeEmojiChanged {
+				msg.Type = msg.SubType
+			}
+
+			logMessage(msg)
+			c.Channel <- msg
+		}
 	}
 }
 
