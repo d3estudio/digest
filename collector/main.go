@@ -14,12 +14,16 @@ import (
 
 func main() {
 	log.Info("Digest Collector")
-	client := slack.Client{}
+	c := make(chan slack.RTMMessage)
+	client := slack.Client{
+		Token: shared.Settings.Token,
+		Channel: c
+	}
 	redis := redis.Client{}
 	redis.Setup()
-	client.Handshake(shared.Settings.Token)
-	c := make(chan slack.RTMMessage)
-	go client.Listen(c)
+
+	client.SetOutputChannel(c)
+	go client.Listen()
 	for {
 		incomingMessage := <-c
 		switch incomingMessage.Type {
