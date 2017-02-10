@@ -27,7 +27,9 @@ var processors = map[string]poorParserArray{
 			item := doc.Find(`meta[property="og:title"]`)
 			if item != nil {
 				value := item.AttrOr("content", "")
-				return &value
+				if value != "" {
+					return &value
+				}
 			}
 			return nil
 		},
@@ -35,7 +37,9 @@ var processors = map[string]poorParserArray{
 			item := doc.Find(`meta[property="twitter:title"]`)
 			if item != nil {
 				value := item.AttrOr("content", "")
-				return &value
+				if value != "" {
+					return &value
+				}
 			}
 			return nil
 		},
@@ -43,7 +47,9 @@ var processors = map[string]poorParserArray{
 			item := doc.Find(`meta[itemprop="name"]`)
 			if item != nil {
 				value := item.AttrOr("content", "")
-				return &value
+				if value != "" {
+					return &value
+				}
 			}
 			queries := []*goquery.Selection{
 				doc.Find(`title`).First(),
@@ -56,6 +62,9 @@ var processors = map[string]poorParserArray{
 					continue
 				}
 				value := sel.Text()
+				if value == "" {
+					continue
+				}
 				return &value
 			}
 			return nil
