@@ -92,7 +92,7 @@ func (c *Client) handshake() error {
 		c.Channels[i.ID] = i
 	}
 
-	c.WebSocketURL = respObj.WebSocketURL
+	c.WebSocketURL = respObj.WebsocketURL
 	return nil
 }
 
@@ -149,7 +149,7 @@ outerLoop:
 		}
 		log.Info("Handshake succeeded.")
 		log.Info("Dialing to ", c.WebSocketURL)
-		ws, err := websocket.Dial(c.WebsocketURL, "", "https://api.slack.com/")
+		ws, err := websocket.Dial(c.WebSocketURL, "", "https://api.slack.com/")
 		if err != nil {
 			log.Error("WebSocket Dial failed: ", err)
 			attemptNumber++
